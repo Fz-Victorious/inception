@@ -1,0 +1,83 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    docker-compose.yml                                 :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: fabou-za <marvin@42.fr>                    +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/07/19 19:59:25 by fabou-za          #+#    #+#              #
+#    Updated: 2023/07/19 19:59:28 by fabou-za         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+version: "3.5"
+
+services:
+  #nginx_service
+  nginx:
+    networks:
+      - inception_network
+    build: ./requirements/nginx
+    image: nginx
+    depends_on:
+      - wordpress
+      - mariadb
+    container_name: nginx
+    ports:
+      - 443:443
+    volumes:
+      - mywd:/var/www/html
+    restart: on-failure
+
+  #wordpress_service
+  wordpress:
+    networks:
+      - inception_network
+    build: ./requirements/wordpress
+    image: wordpress
+    depends_on:
+      - mariadb
+    container_name: wordpress
+    ports:
+      - 9000:9000
+    volumes:
+      - mywd:/var/www/html
+    env_file:
+      - .env
+    restart: on-failure
+
+  #mariadb_service
+  mariadb:
+    networks:
+      - inception_network
+    build: ./requirements/mariadb
+    image: mariadb
+    container_name: mariadb
+    ports:
+      - 3306:3306
+    volumes:
+      - mydb:/var/lib/mysql
+    env_file:
+      - .env
+    restart: on-failure
+
+#volumes:
+volumes:
+  mywd:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: bind
+      device: $HOME/data/wp
+  mydb:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: bind
+      device: $HOME/data/db
+
+#creating_network
+networks:
+  inception_network:
+    name: "inception_network"
+    driver: bridge
